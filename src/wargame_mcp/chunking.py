@@ -4,46 +4,23 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Iterable
 
-try:  # pragma: no cover - optional dependency
-    import tiktoken
-except Exception:  # pragma: no cover - fallback when tiktoken is missing
-    tiktoken = None  # type: ignore
+import tiktoken
 
 from .documents import DocumentChunk, DocumentMetadata
-from .instrumentation import logger
 
 
 CHUNK_SIZE_TOKENS = 800
 CHUNK_OVERLAP_TOKENS = 200
 
-tokenizer_cache: dict[str, Any] = {}
+tokenizer_cache: dict[str, tiktoken.Encoding] = {}
 
 
-def _encoding_for_model(model: str):
+def _encoding_for_model(model: str) -> tiktoken.Encoding:
     if model not in tokenizer_cache:
-        if tiktoken is None:
-            tokenizer_cache[model] = _SimpleEncoding()
-        else:
-            try:  # pragma: no cover - depends on optional download
-                tokenizer_cache[model] = tiktoken.encoding_for_model(model)
-            except Exception as exc:  # pragma: no cover - fallback path
-                logger.warning(
-                    "chunking.encoding_fallback",
-                    model=model,
-                    error=str(exc),
-                )
-                tokenizer_cache[model] = _SimpleEncoding()
+        tokenizer_cache[model] = tiktoken.encoding_for_model(model)
     return tokenizer_cache[model]
-
-
-class _SimpleEncoding:  # pragma: no cover - fallback used in CI without tiktoken
-    def encode(self, text: str) -> list[int]:
-        return [ord(ch) for ch in text]
-
-    def decode(self, tokens: Iterable[int]) -> str:
-        return "".join(chr(int(token)) for token in tokens)
 
 
 @dataclass
