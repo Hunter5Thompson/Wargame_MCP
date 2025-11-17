@@ -6,7 +6,5 @@ __all__ = [
     "documents",
     "embeddings",
     "ingest",
-    "mcp_tools",
-    "server",
     "vectorstore",
 ]

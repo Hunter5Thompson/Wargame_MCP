@@ -5,10 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-try:  # pragma: no cover - optional dependency
-    import yaml
-except Exception:  # pragma: no cover - fallback parser
-    yaml = None  # type: ignore
+import yaml
 
 from .documents import DocumentMetadata, build_document_id, ensure_year, merge_tags
 
@@ -18,50 +15,11 @@ COLLECTIONS = {"doctrine", "aar", "scenario", "intel", "other"}
 def _load_yaml(path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
-    text = path.read_text(encoding="utf-8")
-    if yaml is None:
-        return _parse_simple_yaml(text)
     try:
-        data = yaml.safe_load(text)
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
         return data or {}
     except yaml.YAMLError:
-        return _parse_simple_yaml(text)
-
-
-def _parse_simple_yaml(text: str) -> dict[str, Any]:
-    data: dict[str, Any] = {}
-    current_list: str | None = None
-    for line in text.splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-        if stripped.startswith("- ") and current_list:
-            data.setdefault(current_list, []).append(stripped[2:].strip())
-            continue
-        if ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        key = key.strip()
-        value = value.strip()
-        if not value:
-            current_list = key
-            data.setdefault(key, [])
-            continue
-        current_list = None
-        data[key] = _coerce_scalar(value)
-    return data
-
-
-def _coerce_scalar(value: str) -> Any:
-    lowered = value.lower()
-    if lowered in {"null", "none"}:
         return None
-    if lowered in {"true", "false"}:
-        return lowered == "true"
-    try:
-        return int(value)
-    except ValueError:
-        return value.strip("'\"")
 
 
 def metadata_for_document(doc_path: Path) -> DocumentMetadata:

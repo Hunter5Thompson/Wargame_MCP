@@ -28,31 +28,4 @@ wargame-mcp list-collections
 wargame-mcp health-check
 ```
 
-### MCP-Server & Inspector-Test
-
-Das optionale MCP-Server-Interface basiert auf `mcp.server.FastMCP`. Installiere
-dafür zusätzlich das `mcp`-Paket und starte den Server via Script:
-
-```bash
-pip install mcp  # falls noch nicht vorhanden
-wargame-rag-mcp
-```
-
-Für einen schnellen Integrationstest lässt sich der offizielle MCP Inspector
-nutzen (im `mcp`-Paket enthalten). In einem zweiten Terminal prüfst du damit die
-Tools:
-
-```bash
-python -m mcp.server.inspect --command wargame-rag-mcp
-```
-
-Der Inspector ruft `search_wargame_docs`, `get_doc_span`, `list_collections` und
-`health_check` direkt über MCP auf.
-
-### Tests
-
-```bash
-pytest
-```
-
 Alle weiterführenden Anforderungen, Datenmodelle und Betriebsrichtlinien stehen weiterhin im [PRD](docs/PRD.md).

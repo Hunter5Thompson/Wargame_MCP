@@ -21,7 +21,6 @@ dev = [
 
 [project.scripts]
 wargame-mcp = "wargame_mcp.cli:app"
-wargame-rag-mcp = "wargame_mcp.server:run"
 
 [build-system]
 requires = ["setuptools>=69", "wheel"]
