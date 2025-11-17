@@ -33,11 +33,6 @@ class DocumentMetadata:
             "tags": self.tags,
         }
 
-    def chroma_dict(self) -> dict:
-        data = self.as_dict()
-        data["tags"] = ",".join(self.tags)
-        return data
-
 
 @dataclass(slots=True)
 class DocumentChunk:
@@ -48,11 +43,10 @@ class DocumentChunk:
     chunk_count: int
 
     def chroma_metadata(self) -> dict:
-        base = self.metadata.chroma_dict()
+        base = self.metadata.as_dict()
         base.update({
             "chunk_index": self.chunk_index,
             "chunk_count": self.chunk_count,
-            "chunk_id": self.id,
         })
         return base
 

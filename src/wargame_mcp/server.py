@@ -39,7 +39,6 @@ def create_server() -> "FastMCPType":
         top_k: int = 8,
         min_score: float = 0.0,
         collections: Iterable[str] | None = None,
-        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         """Mirror of the search_wargame_docs MCP tool."""
 
@@ -48,7 +47,6 @@ def create_server() -> "FastMCPType":
             top_k=top_k,
             min_score=min_score,
             collections=collections,
-            correlation_id=correlation_id,
         ).as_dict()
 
     @server.tool()
@@ -56,28 +54,24 @@ def create_server() -> "FastMCPType":
         document_id: str,
         center_chunk_index: int,
         span: int = 2,
-        correlation_id: str | None = None,
     ) -> dict[str, Any]:
         """Fetch the textual neighbourhood for a chunk."""
 
         return get_document_span(
-            document_id=document_id,
-            center_chunk_index=center_chunk_index,
-            span=span,
-            correlation_id=correlation_id,
+            document_id=document_id, center_chunk_index=center_chunk_index, span=span
         )
 
     @server.tool()
-    async def list_collections(correlation_id: str | None = None) -> dict[str, Any]:
+    async def list_collections() -> dict[str, Any]:
         """List every collection with aggregated counts."""
 
-        return list_collections_summary(correlation_id=correlation_id)
+        return list_collections_summary()
 
     @server.tool()
-    async def health_check(correlation_id: str | None = None) -> dict[str, Any]:
+    async def health_check() -> dict[str, Any]:
         """Ping the Chroma backend."""
 
-        return health_check_status(correlation_id=correlation_id)
+        return health_check_status()
 
     return server
 

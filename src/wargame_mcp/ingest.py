@@ -6,7 +6,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable
 
-from ._rich_compat import Console, Table
+from rich.console import Console
+from rich.table import Table
+
 from .chunking import chunk_text, iter_documents, read_text
 from .config import SETTINGS
 from .documents import DocumentChunk, DocumentMetadata, IngestionSummary
