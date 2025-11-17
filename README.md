@@ -1,2 +1,58 @@
-# Wargame_MCP
-FullStack Development by Codex
+# Wargame MCP
+
+Dieses Repository liefert nicht nur die Product Requirements, sondern jetzt auch eine minimal lauffähige Referenzimplementierung für die in [docs/PRD.md](docs/PRD.md) beschriebenen Ziele:
+
+* **Ingestion-Tooling:** Chunking nach Tiktoken-Heuristik (800 Tokens + 200 Overlap) und Ablage in einer lokalen Chroma-Collection.
+* **RAG-Befehle:** CLI-Kommandos für `search_wargame_docs`, `list_collections` und `health_check` (analog zu den MCP-Tools).
+* **Konfigurierbare Embeddings:** Wahlweise echte OpenAI Embeddings (über `OPENAI_API_KEY`) oder deterministische Fake-Vektoren für Offline-Tests.
+
+## Quickstart
+
+```bash
+uv pip install -e .
+export CHROMA_PATH="./data/chroma"
+# Optional: export OPENAI_API_KEY="sk-..."
+```
+
+### Beispiel-Ingestion
+
+```bash
+wargame-mcp ingest examples/sample_docs --fake-embeddings
+```
+
+### Suche & Health-Check
+
+```bash
+wargame-mcp search "urban defense" --fake-embeddings
+wargame-mcp list-collections
+wargame-mcp health-check
+```
+
+### MCP-Server & Inspector-Test
+
+Das optionale MCP-Server-Interface basiert auf `mcp.server.FastMCP`. Installiere
+dafür zusätzlich das `mcp`-Paket und starte den Server via Script:
+
+```bash
+pip install mcp  # falls noch nicht vorhanden
+wargame-rag-mcp
+```
+
+Für einen schnellen Integrationstest lässt sich der offizielle MCP Inspector
+nutzen (im `mcp`-Paket enthalten). In einem zweiten Terminal prüfst du damit die
+Tools:
+
+```bash
+python -m mcp.server.inspect --command wargame-rag-mcp
+```
+
+Der Inspector ruft `search_wargame_docs`, `get_doc_span`, `list_collections` und
+`health_check` direkt über MCP auf.
+
+### Tests
+
+```bash
+pytest
+```
+
+Alle weiterführenden Anforderungen, Datenmodelle und Betriebsrichtlinien stehen weiterhin im [PRD](docs/PRD.md).
