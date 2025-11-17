@@ -34,32 +34,41 @@ def chunk_text(
     text: str,
     model: str,
 ) -> ChunkingResult:
+    """Chunks text into overlapping fragments based on token counts."""
     encoding = _encoding_for_model(model)
     tokens = encoding.encode(text)
-    chunks: list[DocumentChunk] = []
     token_count = len(tokens)
-    chunk_count = max(1, (token_count + CHUNK_SIZE_TOKENS - 1) // (CHUNK_SIZE_TOKENS - CHUNK_OVERLAP_TOKENS))
 
+    if not tokens:
+        return ChunkingResult(chunks=[], token_count=0)
+
+    # First pass: determine chunk boundaries to get the real chunk count
+    boundaries: list[tuple[int, int]] = []
     start = 0
-    chunk_index = 0
-    while start < token_count:
+    while True:
         end = min(token_count, start + CHUNK_SIZE_TOKENS)
+        boundaries.append((start, end))
+        if end >= token_count:
+            break
+        start += CHUNK_SIZE_TOKENS - CHUNK_OVERLAP_TOKENS
+
+    chunk_count = len(boundaries)
+
+    # Second pass: create the chunks with the correct metadata
+    chunks: list[DocumentChunk] = []
+    for i, (start, end) in enumerate(boundaries):
         chunk_tokens = tokens[start:end]
         chunk_text_str = encoding.decode(chunk_tokens)
-        chunk_id = f"{metadata.document_id}:{chunk_index}"
+        chunk_id = f"{metadata.document_id}:{i}"
         chunks.append(
             DocumentChunk(
                 id=chunk_id,
                 text=chunk_text_str,
                 metadata=metadata,
-                chunk_index=chunk_index,
+                chunk_index=i,
                 chunk_count=chunk_count,
             )
         )
-        if end == token_count:
-            break
-        start = max(0, end - CHUNK_OVERLAP_TOKENS)
-        chunk_index += 1
 
     return ChunkingResult(chunks=chunks, token_count=token_count)
 

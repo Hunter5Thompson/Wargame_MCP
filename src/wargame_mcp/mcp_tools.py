@@ -61,7 +61,7 @@ def get_document_span(
     collection = get_collection()
     raw = collection.get(
         where={"document_id": document_id},
-        include=["ids", "documents", "metadatas"],
+        include=["documents", "metadatas"],
     )
     chunks = []
     ids = _flatten(raw.get("ids", []))

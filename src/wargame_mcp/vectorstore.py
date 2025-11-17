@@ -46,7 +46,10 @@ def upsert_chunks(chunks: Iterable[DocumentChunk], embeddings: list[list[float]]
     documents: list[str] = []
     for chunk, vector in zip(chunks, embeddings):
         ids.append(chunk.id)
-        metadatas.append(chunk.chroma_metadata())
+        meta = chunk.chroma_metadata()
+        if isinstance(meta.get("tags"), list):
+            meta["tags"] = ",".join(meta["tags"])
+        metadatas.append(meta)
         documents.append(chunk.text)
     collection.upsert(ids=ids, metadatas=metadatas, documents=documents, embeddings=embeddings)
 
@@ -85,6 +88,8 @@ def query(
         score = 1 - float(distance)
         if score < min_score:
             continue
+        if isinstance(metadata.get("tags"), str):
+            metadata["tags"] = [t.strip() for t in metadata["tags"].split(",") if t.strip()]
         hits.append(
             SearchResult(
                 id=chunk_id,
