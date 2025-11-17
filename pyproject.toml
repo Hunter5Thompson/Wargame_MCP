@@ -11,8 +11,7 @@ dependencies = [
   "typer>=0.12.3",
   "PyYAML>=6.0.1",
   "pydantic>=2.7.0",
-  "rich>=13.7.1",
-  "structlog>=24.1.0"
+  "rich>=13.7.1"
 ]
 
 [project.optional-dependencies]
@@ -22,7 +21,6 @@ dev = [
 
 [project.scripts]
 wargame-mcp = "wargame_mcp.cli:app"
-wargame-rag-mcp = "wargame_mcp.server:run"
 
 [build-system]
 requires = ["setuptools>=69", "wheel"]
