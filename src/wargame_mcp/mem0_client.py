@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from threading import Lock
 from typing import Any, Iterable
 
 import httpx
@@ -132,6 +133,7 @@ class Mem0Client:
 
 
 _mem0_client: Mem0Client | None = None
+_mem0_client_lock = Lock()
 
 
 def build_mem0_client() -> Mem0Client:
@@ -141,12 +143,18 @@ def build_mem0_client() -> Mem0Client:
 
 
 def get_mem0_client() -> Mem0Client:
+    """Thread-safe singleton accessor for the Mem0 client."""
     global _mem0_client
     if _mem0_client is None:
-        _mem0_client = build_mem0_client()
+        with _mem0_client_lock:
+            # Double-check pattern
+            if _mem0_client is None:
+                _mem0_client = build_mem0_client()
     return _mem0_client
 
 
 def set_mem0_client(client: Mem0Client | None) -> None:
+    """Thread-safe setter for the Mem0 client (used in tests)."""
     global _mem0_client
-    _mem0_client = client
+    with _mem0_client_lock:
+        _mem0_client = client

@@ -1,0 +1,115 @@
+version: '3.9'
+
+services:
+  # ChromaDB Vector Database
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: wargame-chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+      - ALLOW_RESET=TRUE
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - wargame-network
+    restart: unless-stopped
+
+  # Mem0 Memory Service
+  mem0:
+    image: mem0ai/mem0:latest
+    container_name: wargame-mem0
+    ports:
+      - "8080:8080"
+    volumes:
+      - mem0_data:/data
+    environment:
+      - MEM0_PORT=8080
+      - MEM0_HOST=0.0.0.0
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - wargame-network
+    restart: unless-stopped
+
+  # Wargame MCP Application
+  wargame-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wargame-mcp-app
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./data:/data
+      - ./examples:/app/examples:ro
+    environment:
+      # ChromaDB Configuration
+      - CHROMA_PATH=/data/chroma
+      - CHROMA_COLLECTION=wargame_docs
+
+      # OpenAI Configuration
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-text-embedding-3-large}
+
+      # Mem0 Configuration
+      - MEM0_BASE_URL=http://mem0:8080
+      - MEM0_API_KEY=${MEM0_API_KEY:-}
+      - MEM0_DEFAULT_LIMIT=10
+      - MEM0_DEFAULT_SCOPE=user
+
+      # Application Configuration
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      chromadb:
+        condition: service_healthy
+      mem0:
+        condition: service_healthy
+    networks:
+      - wargame-network
+    restart: unless-stopped
+    command: tail -f /dev/null  # Keep container running for interactive use
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: wargame-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - wargame-mcp
+      - chromadb
+      - mem0
+    networks:
+      - wargame-network
+    restart: unless-stopped
+    profiles:
+      - with-proxy
+
+networks:
+  wargame-network:
+    driver: bridge
+    name: wargame-network
+
+volumes:
+  chroma_data:
+    name: wargame-chroma-data
+  mem0_data:
+    name: wargame-mem0-data
