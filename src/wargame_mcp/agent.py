@@ -266,19 +266,29 @@ class LocalToolExecutor:
         name = call.tool_name
         args = call.arguments
         if name == "search_wargame_docs":
+            try:
+                top_k = int(args.get("top_k", 8))
+                min_score = float(args.get("min_score", 0.0))
+            except (ValueError, TypeError) as exc:
+                return json.dumps({"error": f"Invalid parameter type: {exc}"})
             result = search_wargame_documents(
                 query_text=args.get("query") or args.get("query_text", ""),
-                top_k=int(args.get("top_k", 8)),
-                min_score=float(args.get("min_score", 0.0)),
+                top_k=top_k,
+                min_score=min_score,
                 collections=args.get("collections"),
                 fake_embeddings=self.fake_embeddings,
             )
             return json.dumps(result.as_dict())
         if name == "get_doc_span":
+            try:
+                center_chunk_index = int(args.get("center_chunk_index", 0))
+                span = int(args.get("span", 2))
+            except (ValueError, TypeError) as exc:
+                return json.dumps({"error": f"Invalid parameter type: {exc}"})
             payload = get_document_span(
                 document_id=args["document_id"],
-                center_chunk_index=int(args.get("center_chunk_index", 0)),
-                span=int(args.get("span", 2)),
+                center_chunk_index=center_chunk_index,
+                span=span,
             )
             return json.dumps(payload)
         if name == "list_collections":
@@ -291,10 +301,14 @@ class LocalToolExecutor:
         name = call.tool_name
         args = call.arguments
         if name == "memory_search":
+            try:
+                limit = int(args.get("limit", 5))
+            except (ValueError, TypeError) as exc:
+                return json.dumps({"error": f"Invalid parameter type: {exc}"})
             payload = memory_search_entries(
                 query=args.get("query", ""),
                 user_id=args["user_id"],
-                limit=int(args.get("limit", 5)),
+                limit=limit,
                 scopes=args.get("scopes"),
             )
             return json.dumps(payload)
@@ -311,9 +325,13 @@ class LocalToolExecutor:
             payload = memory_delete_entry(memory_id=args["memory_id"])
             return json.dumps(payload)
         if name == "memory_list":
+            try:
+                limit = int(args.get("limit", 5))
+            except (ValueError, TypeError) as exc:
+                return json.dumps({"error": f"Invalid parameter type: {exc}"})
             payload = memory_list_entries(
                 user_id=args["user_id"],
-                limit=int(args.get("limit", 5)),
+                limit=limit,
                 scope=args.get("scope"),
                 tags=args.get("tags"),
             )

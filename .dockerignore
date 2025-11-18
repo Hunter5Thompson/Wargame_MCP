@@ -19,7 +19,6 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
 # Virtual environments
 venv/
@@ -33,34 +32,35 @@ ENV/
 *.swp
 *.swo
 *~
-.DS_Store
 
 # Testing
 .pytest_cache/
 .coverage
-.coverage.*
 htmlcov/
 .tox/
-.mypy_cache/
-.ruff_cache/
 
-# Data
+# Data directories
 data/
-.data/
-.chroma/
 *.db
 *.sqlite
 
 # Logs
 *.log
-logs/
 
-# Environment
-.env
-.env.local
+# Git
+.git/
+.gitignore
 
 # Docker
-docker-compose.override.yml
+Dockerfile
+docker-compose*.yml
+.dockerignore
 
-# Backups
-backups/
+# Documentation
+docs/
+*.md
+!README.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml

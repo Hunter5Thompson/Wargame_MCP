@@ -20,28 +20,45 @@ console = Console()
 
 
 def _ingest_file(path: Path, fake_embeddings: bool) -> tuple[list[DocumentChunk], int]:
-    metadata = metadata_for_document(path)
-    text = read_text(path)
-    result = chunk_text(metadata, text, SETTINGS.embedding_model)
-    delete_document(metadata.document_id)
-    provider = build_embedding_provider(fake=fake_embeddings)
-    vectors = provider.embed([chunk.text for chunk in result.chunks])
-    upsert_chunks(result.chunks, vectors)
-    return result.chunks, result.token_count
+    """Ingest a single file with comprehensive error handling."""
+    try:
+        metadata = metadata_for_document(path)
+        text = read_text(path)
+        result = chunk_text(metadata, text, SETTINGS.embedding_model)
+        delete_document(metadata.document_id)
+        provider = build_embedding_provider(fake=fake_embeddings)
+        vectors = provider.embed([chunk.text for chunk in result.chunks])
+        upsert_chunks(result.chunks, vectors)
+        return result.chunks, result.token_count
+    except FileNotFoundError as exc:
+        console.log(f"[red]ERROR:[/red] File not found: {path}")
+        raise RuntimeError(f"File not found: {path}") from exc
+    except PermissionError as exc:
+        console.log(f"[red]ERROR:[/red] Permission denied: {path}")
+        raise RuntimeError(f"Permission denied: {path}") from exc
+    except Exception as exc:
+        console.log(f"[red]ERROR:[/red] Failed to ingest {path}: {exc}")
+        raise RuntimeError(f"Failed to ingest {path}: {exc}") from exc
 
 
 def ingest_directory(input_dir: Path, fake_embeddings: bool = False) -> IngestionSummary:
+    """Ingest all documents from a directory with error handling and reporting."""
     start = datetime.utcnow()
     document_count = 0
     chunk_count = 0
     token_count = 0
+    failed_files: list[tuple[Path, str]] = []
 
     for file_path in iter_documents(input_dir):
-        chunks, tokens = _ingest_file(file_path, fake_embeddings=fake_embeddings)
-        document_count += 1
-        chunk_count += len(chunks)
-        token_count += tokens
-        console.log(f"Ingested {file_path} → {len(chunks)} chunks")
+        try:
+            chunks, tokens = _ingest_file(file_path, fake_embeddings=fake_embeddings)
+            document_count += 1
+            chunk_count += len(chunks)
+            token_count += tokens
+            console.log(f"[green]✓[/green] Ingested {file_path} → {len(chunks)} chunks")
+        except Exception as exc:
+            failed_files.append((file_path, str(exc)))
+            console.log(f"[red]✗[/red] Failed to ingest {file_path}: {exc}")
 
     end = datetime.utcnow()
     summary = IngestionSummary(
@@ -52,6 +69,12 @@ def ingest_directory(input_dir: Path, fake_embeddings: bool = False) -> Ingestio
         finished_at=end,
     )
     _print_summary(summary)
+
+    if failed_files:
+        console.print("\n[yellow]Failed files:[/yellow]")
+        for path, error in failed_files:
+            console.print(f"  • {path}: {error}")
+
     return summary
 
 
