@@ -4,14 +4,13 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable
 
 from rich.console import Console
 from rich.table import Table
 
 from .chunking import chunk_text, iter_documents, read_text
 from .config import SETTINGS
-from .documents import DocumentChunk, DocumentMetadata, IngestionSummary
+from .documents import DocumentChunk, IngestionSummary
 from .embeddings import build_embedding_provider
 from .metadata_loader import metadata_for_document
 from .vectorstore import delete_document, upsert_chunks
