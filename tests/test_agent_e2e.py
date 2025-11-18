@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 import uuid
-from types import SimpleNamespace
 from pathlib import Path
+from types import SimpleNamespace
 
 from wargame_mcp import config
 from wargame_mcp.agent import AgentConfig, LocalToolExecutor, WargameAssistantAgent
@@ -12,7 +12,9 @@ from wargame_mcp.memory_tools import memory_add_entry
 
 
 class FakeToolCall:
-    def __init__(self, *, call_id: str, server_name: str, tool_name: str, arguments: dict[str, object]):
+    def __init__(
+        self, *, call_id: str, server_name: str, tool_name: str, arguments: dict[str, object]
+    ):
         self.id = call_id
         self.server_name = server_name
         self.tool_name = tool_name
@@ -20,7 +22,14 @@ class FakeToolCall:
 
 
 class FakeResponse:
-    def __init__(self, *, response_id: str, status: str, tool_calls: list[FakeToolCall] | None = None, output_text: str = ""):
+    def __init__(
+        self,
+        *,
+        response_id: str,
+        status: str,
+        tool_calls: list[FakeToolCall] | None = None,
+        output_text: str = "",
+    ):
         self.id = response_id
         self.status = status
         self.output_text = output_text
@@ -52,9 +61,14 @@ class FakeResponses:
     def create(self, **kwargs):  # pragma: no cover - exercised indirectly
         self.invocations.append(kwargs)
         if "response_id" not in kwargs:
-            return FakeResponse(response_id="resp-1", status="requires_action", tool_calls=self.tool_calls)
+            return FakeResponse(
+                response_id="resp-1", status="requires_action", tool_calls=self.tool_calls
+            )
 
-        outputs = {item["tool_call_id"]: json.loads(item["output"]) for item in kwargs.get("tool_outputs", [])}
+        outputs = {
+            item["tool_call_id"]: json.loads(item["output"])
+            for item in kwargs.get("tool_outputs", [])
+        }
         memory_summary = ""
         doc_summary = ""
         for call in self.tool_calls:
@@ -84,7 +98,9 @@ def _configure_chroma(tmp_path: Path) -> None:
 def test_agent_flow_uses_tools(tmp_path, fake_mem0_client):
     _configure_chroma(tmp_path)
     ingest_directory(Path("examples/sample_docs"), fake_embeddings=True)
-    memory_add_entry(user_id="demo-user", memory="Baltic Shield 2025 bevorzugte COA Bravo", scope="scenario")
+    memory_add_entry(
+        user_id="demo-user", memory="Baltic Shield 2025 bevorzugte COA Bravo", scope="scenario"
+    )
 
     fake_client = FakeOpenAIClient()
     agent = WargameAssistantAgent(client=fake_client, config=AgentConfig(model="fake-model"))

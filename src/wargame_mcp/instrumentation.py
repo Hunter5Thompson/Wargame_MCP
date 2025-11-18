@@ -9,7 +9,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from contextvars import ContextVar
 from threading import Lock
-from typing import Any, Dict
+from typing import Any
 
 try:  # pragma: no cover - optional dependency
     import structlog  # type: ignore
@@ -53,7 +53,7 @@ class LatencyRecorder:
 
     def __init__(self) -> None:
         self._lock = Lock()
-        self._latencies: Dict[str, dict[str, float]] = defaultdict(
+        self._latencies: dict[str, dict[str, float]] = defaultdict(
             lambda: {"count": 0.0, "total_ms": 0.0, "max_ms": 0.0, "errors": 0.0}
         )
 
@@ -125,4 +125,3 @@ def track_latency(operation: str, **fields: Any):
             correlation_id=get_correlation_id(),
             **fields,
         )
-

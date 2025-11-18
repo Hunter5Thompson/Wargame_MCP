@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from threading import Lock
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
 from .config import SETTINGS
 from .instrumentation import get_correlation_id, logger
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class Mem0Error(RuntimeError):

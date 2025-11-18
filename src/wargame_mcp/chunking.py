@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Iterable
+from typing import TYPE_CHECKING
 
 import tiktoken
 
 from .documents import DocumentChunk, DocumentMetadata
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from pathlib import Path
 
 CHUNK_SIZE_TOKENS = 800
 CHUNK_OVERLAP_TOKENS = 200

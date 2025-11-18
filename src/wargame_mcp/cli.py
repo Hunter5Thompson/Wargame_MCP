@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import typer
 from rich.console import Console
@@ -13,13 +12,21 @@ from .embeddings import build_embedding_provider
 from .ingest import ingest_directory
 from .vectorstore import get_collection, query
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 app = typer.Typer(help="Utilities for the Wargame Knowledge & Memory System prototype.")
 console = Console()
+
+# Constants
+SNIPPET_MAX_LENGTH = 120
 
 
 @app.command()
 def ingest(
-    input_dir: Path = typer.Argument(..., exists=True, file_okay=False, dir_okay=True, readable=True),
+    input_dir: Path = typer.Argument(
+        ..., exists=True, file_okay=False, dir_okay=True, readable=True
+    ),
     fake_embeddings: bool = typer.Option(False, help="Use deterministic fake embeddings."),
 ):
     """Ingest all supported documents from INPUT_DIR into Chroma."""
@@ -31,8 +38,12 @@ def search_cmd(
     query_text: str = typer.Argument(..., help="Semantic search query."),
     top_k: int = typer.Option(8, min=1, max=50),
     min_score: float = typer.Option(0.0, min=0.0, max=1.0),
-    collections: Optional[str] = typer.Option(None, help="Comma separated list of collection filters."),
-    fake_embeddings: bool = typer.Option(False, help="Use deterministic embeddings for offline testing."),
+    collections: str | None = typer.Option(
+        None, help="Comma separated list of collection filters."
+    ),
+    fake_embeddings: bool = typer.Option(
+        False, help="Use deterministic embeddings for offline testing."
+    ),
 ):
     """Search previously ingested documents."""
     provider = build_embedding_provider(fake=fake_embeddings)
@@ -54,7 +65,9 @@ def search_cmd(
     table.add_column("Collection")
     table.add_column("Snippet")
     for hit in results:
-        snippet = hit.text[:120].replace("\n", " ") + ("…" if len(hit.text) > 120 else "")
+        snippet = hit.text[:SNIPPET_MAX_LENGTH].replace("\n", " ") + (
+            "…" if len(hit.text) > SNIPPET_MAX_LENGTH else ""
+        )
         table.add_row(hit.id, f"{hit.score:.3f}", str(hit.metadata.get("collection")), snippet)
     console.print(table)
 

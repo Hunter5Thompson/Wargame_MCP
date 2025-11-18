@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 from .mcp_tools import (
     get_document_span,
@@ -17,13 +17,15 @@ except Exception:  # pragma: no cover - optional runtime dependency
     FastMCP = None  # type: ignore
 
 if TYPE_CHECKING:  # pragma: no cover - imported for typing only
+    from collections.abc import Iterable
+
     from mcp.server.fastmcp import FastMCP as FastMCPType
 
 
 SERVER_NAME = "wargame-rag-mcp"
 
 
-def create_server() -> "FastMCPType":
+def create_server() -> FastMCPType:
     """Instantiate the FastMCP server with tool bindings."""
 
     if FastMCP is None:  # pragma: no cover - depends on optional dependency

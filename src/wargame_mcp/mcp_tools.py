@@ -9,10 +9,13 @@ without having to spin up an MCP runtime.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 from .embeddings import build_embedding_provider
 from .vectorstore import SearchResult, get_collection, query
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 @dataclass(slots=True)
@@ -68,7 +71,7 @@ def get_document_span(
     documents = _flatten(raw.get("documents", []))
     metadatas = _flatten(raw.get("metadatas", []))
 
-    for chunk_id, text, metadata in zip(ids, documents, metadatas):
+    for chunk_id, text, metadata in zip(ids, documents, metadatas, strict=False):
         chunk_index = metadata.get("chunk_index")
         if chunk_index is None:
             continue
@@ -122,8 +125,6 @@ def health_check_status() -> dict[str, Any]:
 
 def _serialize_search_hit(hit: SearchResult) -> dict[str, Any]:
     metadata = dict(hit.metadata)
-    metadata.setdefault("chunk_index", metadata.get("chunk_index"))
-    metadata.setdefault("chunk_count", metadata.get("chunk_count"))
     return {
         "id": hit.id,
         "text": hit.text,

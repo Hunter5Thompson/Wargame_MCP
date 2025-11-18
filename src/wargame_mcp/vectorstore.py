@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import TYPE_CHECKING
 
 import chromadb
 from chromadb.api.types import EmbeddingFunction, Embeddings
 
 from .config import SETTINGS
-from .documents import DocumentChunk
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from .documents import DocumentChunk
 
 
 class IdentityEmbeddingFunction(EmbeddingFunction):
@@ -44,7 +48,7 @@ def upsert_chunks(chunks: Iterable[DocumentChunk], embeddings: list[list[float]]
     ids: list[str] = []
     metadatas: list[dict] = []
     documents: list[str] = []
-    for chunk, vector in zip(chunks, embeddings):
+    for chunk, _vector in zip(chunks, embeddings, strict=False):
         ids.append(chunk.id)
         meta = chunk.chroma_metadata()
         if isinstance(meta.get("tags"), list):
@@ -84,7 +88,9 @@ def query(
     documents = results.get("documents", [[]])[0]
     metadatas = results.get("metadatas", [[]])[0]
     distances = results.get("distances", [[]])[0]
-    for chunk_id, chunk_text, metadata, distance in zip(ids, documents, metadatas, distances):
+    for chunk_id, chunk_text, metadata, distance in zip(
+        ids, documents, metadatas, distances, strict=False
+    ):
         score = 1 - float(distance)
         if score < min_score:
             continue

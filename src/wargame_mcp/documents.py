@@ -3,9 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
-from pathlib import Path
-from typing import Iterable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from datetime import datetime
+    from pathlib import Path
+
+# Constants for year validation
+MIN_VALID_YEAR = 1900
+MAX_VALID_YEAR = 2100
 
 
 def _default_tags() -> list[str]:
@@ -44,10 +51,12 @@ class DocumentChunk:
 
     def chroma_metadata(self) -> dict:
         base = self.metadata.as_dict()
-        base.update({
-            "chunk_index": self.chunk_index,
-            "chunk_count": self.chunk_count,
-        })
+        base.update(
+            {
+                "chunk_index": self.chunk_index,
+                "chunk_count": self.chunk_count,
+            }
+        )
         return base
 
 
@@ -72,7 +81,7 @@ class IngestionSummary:
 def ensure_year(value: int | None) -> int | None:
     if value is None:
         return None
-    if 1900 <= value <= 2100:
+    if MIN_VALID_YEAR <= value <= MAX_VALID_YEAR:
         return value
     return None
 

@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from importlib import import_module
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 from .mcp_tools import (
     get_document_span,
@@ -50,7 +51,9 @@ class AgentConfig:
         default_factory=lambda: MCPServer(server_name="wargame-rag-mcp", command="wargame-rag-mcp")
     )
     mem0_server: MCPServer | None = field(
-        default_factory=lambda: MCPServer(server_name="wargame-mem0-mcp", command="wargame-mem0-mcp")
+        default_factory=lambda: MCPServer(
+            server_name="wargame-mem0-mcp", command="wargame-mem0-mcp"
+        )
     )
 
 
@@ -66,7 +69,7 @@ class OpenAIClient(Protocol):
 def create_openai_client(**kwargs: Any) -> OpenAIClient:
     """Instantiate the OpenAI SDK client (importing lazily to keep optional)."""
 
-    client_class = getattr(import_module("openai"), "OpenAI")
+    client_class = import_module("openai").OpenAI
     return client_class(**kwargs)
 
 
@@ -128,6 +131,7 @@ class WargameAssistantAgent:
             raise RuntimeError(f"Unexpected response status: {getattr(response, 'status', None)}")
 
         return extract_response_text(response)
+
 
 def build_agent_payload(
     *, config: AgentConfig, question: str, user_id: str, correlation_id: str | None = None
@@ -198,9 +202,7 @@ def parse_tool_call(raw_call: Any) -> ParsedToolCall:
         or _lookup(_lookup(raw_call, "function"), "name")
     )
     arguments = (
-        _lookup(raw_call, "arguments")
-        or _lookup(_lookup(raw_call, "function"), "arguments")
-        or {}
+        _lookup(raw_call, "arguments") or _lookup(_lookup(raw_call, "function"), "arguments") or {}
     )
     if isinstance(arguments, str):
         try:
@@ -232,7 +234,11 @@ def extract_response_text(response: Any) -> str:
     for block in output:
         contents = getattr(block, "content", None) or []
         for content in contents:
-            text = getattr(content, "text", None) or content.get("text") if isinstance(content, dict) else None
+            text = (
+                getattr(content, "text", None) or content.get("text")
+                if isinstance(content, dict)
+                else None
+            )
             if text:
                 return text.strip()
             if isinstance(content, dict) and content.get("type") == "output_text":

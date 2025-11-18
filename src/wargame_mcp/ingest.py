@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from pathlib import Path
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from rich.console import Console
 from rich.table import Table
@@ -14,6 +14,9 @@ from .documents import DocumentChunk, IngestionSummary
 from .embeddings import build_embedding_provider
 from .metadata_loader import metadata_for_document
 from .vectorstore import delete_document, upsert_chunks
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 console = Console()
 
@@ -42,7 +45,7 @@ def _ingest_file(path: Path, fake_embeddings: bool) -> tuple[list[DocumentChunk]
 
 def ingest_directory(input_dir: Path, fake_embeddings: bool = False) -> IngestionSummary:
     """Ingest all documents from a directory with error handling and reporting."""
-    start = datetime.utcnow()
+    start = datetime.now(UTC)
     document_count = 0
     chunk_count = 0
     token_count = 0
@@ -59,7 +62,7 @@ def ingest_directory(input_dir: Path, fake_embeddings: bool = False) -> Ingestio
             failed_files.append((file_path, str(exc)))
             console.log(f"[red]✗[/red] Failed to ingest {file_path}: {exc}")
 
-    end = datetime.utcnow()
+    end = datetime.now(UTC)
     summary = IngestionSummary(
         document_count=document_count,
         chunk_count=chunk_count,

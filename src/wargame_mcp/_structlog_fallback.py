@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -26,7 +26,7 @@ class _TimeStamper:
 
     def __call__(self, _logger, _method_name: str, event_dict: dict[str, Any]) -> dict[str, Any]:
         if self.fmt == "iso":
-            event_dict.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
+            event_dict.setdefault("timestamp", datetime.now(UTC).isoformat())
         return event_dict
 
 
@@ -81,4 +81,3 @@ def configure(**_kwargs: Any) -> None:
 
 def get_logger(name: str | None = None) -> _Logger:
     return _Logger(name)
-

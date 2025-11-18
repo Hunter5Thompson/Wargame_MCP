@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import hashlib
-from typing import Iterable
 
 try:
     from openai import OpenAI
 except Exception:  # pragma: no cover - optional dependency at runtime
     OpenAI = None  # type: ignore
 
+from typing import TYPE_CHECKING
+
 from .config import SETTINGS
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class EmbeddingProvider:
@@ -35,7 +39,9 @@ class FakeEmbeddingProvider(EmbeddingProvider):
 
 
 class OpenAIEmbeddingProvider(EmbeddingProvider):
-    def __init__(self, model: str | None = None, api_key: str | None = None, base_url: str | None = None) -> None:
+    def __init__(
+        self, model: str | None = None, api_key: str | None = None, base_url: str | None = None
+    ) -> None:
         if OpenAI is None:
             raise RuntimeError("openai package not installed; install openai>=1.0.0")
         self.model = model or SETTINGS.embedding_model
