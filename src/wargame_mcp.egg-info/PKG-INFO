@@ -1,0 +1,47 @@
+Metadata-Version: 2.4
+Name: wargame-mcp
+Version: 0.1.0
+Summary: Reference implementation for the Wargame Knowledge & Memory System tooling.
+Author: Wargame Team
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: chromadb>=0.5.0
+Requires-Dist: tiktoken>=0.7.0
+Requires-Dist: typer>=0.12.3
+Requires-Dist: PyYAML>=6.0.1
+Requires-Dist: pydantic>=2.7.0
+Requires-Dist: rich>=13.7.1
+Provides-Extra: dev
+Requires-Dist: pytest>=8.2.0; extra == "dev"
+
+# Wargame MCP
+
+Dieses Repository liefert nicht nur die Product Requirements, sondern jetzt auch eine minimal lauffähige Referenzimplementierung für die in [docs/PRD.md](docs/PRD.md) beschriebenen Ziele:
+
+* **Ingestion-Tooling:** Chunking nach Tiktoken-Heuristik (800 Tokens + 200 Overlap) und Ablage in einer lokalen Chroma-Collection.
+* **RAG-Befehle:** CLI-Kommandos für `search_wargame_docs`, `list_collections` und `health_check` (analog zu den MCP-Tools).
+* **Konfigurierbare Embeddings:** Wahlweise echte OpenAI Embeddings (über `OPENAI_API_KEY`) oder deterministische Fake-Vektoren für Offline-Tests.
+
+## Quickstart
+
+```bash
+uv pip install -e .
+export CHROMA_PATH="./data/chroma"
+# Optional: export OPENAI_API_KEY="sk-..."
+```
+
+### Beispiel-Ingestion
+
+```bash
+wargame-mcp ingest examples/sample_docs --fake-embeddings
+```
+
+### Suche & Health-Check
+
+```bash
+wargame-mcp search "urban defense" --fake-embeddings
+wargame-mcp list-collections
+wargame-mcp health-check
+```
+
+Alle weiterführenden Anforderungen, Datenmodelle und Betriebsrichtlinien stehen weiterhin im [PRD](docs/PRD.md).
