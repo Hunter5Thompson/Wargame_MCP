@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 from .memory_tools import (
     memory_add_entry,
@@ -17,13 +17,15 @@ except Exception:  # pragma: no cover
     FastMCP = None  # type: ignore
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Iterable
+
     from mcp.server.fastmcp import FastMCP as FastMCPType
 
 
 SERVER_NAME = "mem0-mcp"
 
 
-def create_server() -> "FastMCPType":
+def create_server() -> FastMCPType:
     if FastMCP is None:  # pragma: no cover - depends on optional dependency
         raise RuntimeError(
             "The `mcp` package is required to run the MCP server. Install it with 'pip install mcp'."

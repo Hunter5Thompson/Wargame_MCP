@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 from .config import SETTINGS
 from .instrumentation import correlation_scope, logger, track_latency
 from .mem0_client import get_mem0_client
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 DEFAULT_SCOPES = ["user", "scenario", "agent"]
 
@@ -66,7 +69,9 @@ def memory_add_entry(
     scope_value = scope or SETTINGS.mem0_default_scope
 
     with correlation_scope(correlation_id) as cid:
-        with track_latency("memory_add", tool_name="memory_add", user_id=user_id, scope=scope_value):
+        with track_latency(
+            "memory_add", tool_name="memory_add", user_id=user_id, scope=scope_value
+        ):
             client = get_mem0_client()
             payload = client.memory_add(
                 user_id=user_id,
