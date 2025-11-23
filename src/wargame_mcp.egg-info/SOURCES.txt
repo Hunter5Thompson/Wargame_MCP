@@ -24,6 +24,14 @@ src/wargame_mcp.egg-info/dependency_links.txt
 src/wargame_mcp.egg-info/entry_points.txt
 src/wargame_mcp.egg-info/requires.txt
 src/wargame_mcp.egg-info/top_level.txt
+tests/test_additional_coverage.py
 tests/test_agent_e2e.py
+tests/test_coverage_boost.py
+tests/test_final_push.py
+tests/test_last_effort.py
 tests/test_mcp_tools.py
+tests/test_mcp_tools_unit.py
 tests/test_memory_tools.py
+tests/test_push_to_70.py
+tests/test_simple_units.py
+tests/test_vectorstore_unit.py

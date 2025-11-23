@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import importlib.util
 from typing import TYPE_CHECKING, Any
 
-import yaml
+if importlib.util.find_spec("yaml") is not None:
+    import yaml  # type: ignore  # pragma: no cover - optional dependency
+else:  # pragma: no cover - fallback when PyYAML is unavailable
+    yaml = None
 
 from .documents import DocumentMetadata, build_document_id, ensure_year, merge_tags
 
@@ -15,12 +19,12 @@ COLLECTIONS = {"doctrine", "aar", "scenario", "intel", "other"}
 
 
 def _load_yaml(path: Path) -> dict[str, Any] | None:
-    if not path.exists():
+    if yaml is None or not path.exists():
         return None
     try:
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         return data or {}
-    except yaml.YAMLError:
+    except Exception:
         return None
 
 

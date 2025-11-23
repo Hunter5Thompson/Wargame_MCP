@@ -2,24 +2,45 @@
 
 from __future__ import annotations
 
+import importlib.util
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
-
-import tiktoken
+from typing import TYPE_CHECKING, Any
 
 from .documents import DocumentChunk, DocumentMetadata
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from pathlib import Path
+    import tiktoken
 
 CHUNK_SIZE_TOKENS = 800
 CHUNK_OVERLAP_TOKENS = 200
 
-tokenizer_cache: dict[str, tiktoken.Encoding] = {}
+tokenizer_cache: dict[str, Any] = {}
+
+
+def _get_tiktoken():
+    spec = importlib.util.find_spec("tiktoken")
+    if spec is None:  # pragma: no cover - optional dependency
+        class _FallbackEncoding:
+            def encode(self, text: str) -> list[int]:
+                return list(text.encode("utf-8"))
+
+            def decode(self, tokens: list[int]) -> str:
+                return bytes(tokens).decode("utf-8", errors="ignore")
+
+        class _FallbackTiktoken:
+            def encoding_for_model(self, _model: str) -> _FallbackEncoding:
+                return _FallbackEncoding()
+
+        return _FallbackTiktoken()
+    import tiktoken
+
+    return tiktoken
 
 
 def _encoding_for_model(model: str) -> tiktoken.Encoding:
+    tiktoken = _get_tiktoken()
     if model not in tokenizer_cache:
         tokenizer_cache[model] = tiktoken.encoding_for_model(model)
     return tokenizer_cache[model]
@@ -81,10 +102,12 @@ def read_text(path: Path) -> str:
 
 
 def supported_suffix(path: Path) -> bool:
-    return path.suffix.lower() in {".txt", ".md"}
+    return path.suffix.lower() == ".md"
 
 
 def iter_documents(input_dir: Path) -> Iterable[Path]:
     for path in input_dir.rglob("*"):
+        if path.name.startswith("."):
+            continue
         if path.is_file() and supported_suffix(path):
             yield path

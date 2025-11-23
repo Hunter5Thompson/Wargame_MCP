@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import importlib.util
+from dataclasses import dataclass, field
 from threading import Lock
 from typing import TYPE_CHECKING, Any
-
-import httpx
 
 from .config import SETTINGS
 from .instrumentation import get_correlation_id, logger
@@ -26,13 +25,16 @@ class Mem0Client:
     base_url: str
     api_key: str | None = None
     timeout: float = 10.0
+    _httpx: Any = field(init=False, repr=False)
+    _client: Any = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         base = self.base_url.rstrip("/")
         if not base:
             raise ValueError("mem0 base url must be configured")
         self.base_url = base
-        self._client = httpx.Client(base_url=self.base_url, timeout=self.timeout)
+        self._httpx = self._import_httpx()
+        self._client = self._httpx.Client(base_url=self.base_url, timeout=self.timeout)
 
     # --- public helpers -------------------------------------------------
     def memory_search(
@@ -113,7 +115,7 @@ class Mem0Client:
                 headers=self._headers(),
             )
             response.raise_for_status()
-        except httpx.HTTPStatusError as exc:  # pragma: no cover - network failure
+        except self._httpx.HTTPStatusError as exc:  # pragma: no cover - network failure
             logger.error(
                 "mem0.request_failed",
                 status_code=exc.response.status_code,
@@ -124,7 +126,7 @@ class Mem0Client:
             raise Mem0Error(
                 f"Mem0 request failed with status {exc.response.status_code}: {exc.response.text}"
             ) from exc
-        except httpx.HTTPError as exc:  # pragma: no cover - network failure
+        except self._httpx.HTTPError as exc:  # pragma: no cover - network failure
             logger.error("mem0.request_error", error=str(exc), method=method, path=path)
             raise Mem0Error(f"Mem0 request error: {exc}") from exc
 
@@ -133,6 +135,15 @@ class Mem0Client:
         except ValueError as exc:  # pragma: no cover - depends on remote response
             raise Mem0Error("Mem0 response did not contain valid JSON") from exc
         return data if isinstance(data, dict) else {"results": data}
+
+    @staticmethod
+    def _import_httpx():
+        spec = importlib.util.find_spec("httpx")
+        if spec is None:  # pragma: no cover - optional dependency
+            raise ModuleNotFoundError("httpx is required for Mem0Client; install httpx>=0.27.0")
+        import httpx
+
+        return httpx
 
 
 _mem0_client: Mem0Client | None = None

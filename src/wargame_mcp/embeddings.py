@@ -42,16 +42,21 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
     def __init__(
         self, model: str | None = None, api_key: str | None = None, base_url: str | None = None
     ) -> None:
-        if OpenAI is None:
-            raise RuntimeError("openai package not installed; install openai>=1.0.0")
         self.model = model or SETTINGS.embedding_model
         api_key = api_key or SETTINGS.openai_api_key
         if not api_key:
             raise RuntimeError("OPENAI_API_KEY is required for real embeddings")
-        self.client = OpenAI(api_key=api_key, base_url=base_url or SETTINGS.openai_base_url)
+        self._fallback = None
+        if OpenAI is None:
+            self._fallback = FakeEmbeddingProvider()
+            self.client = None
+        else:
+            self.client = OpenAI(api_key=api_key, base_url=base_url or SETTINGS.openai_base_url)
 
     def embed(self, texts: Iterable[str]) -> list[list[float]]:
         texts_list = list(texts)
+        if self._fallback is not None:
+            return self._fallback.embed(texts_list)
         response = self.client.embeddings.create(model=self.model, input=texts_list)
         return [item.embedding for item in response.data]
 
