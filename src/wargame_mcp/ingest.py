@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
+import importlib.util
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
-
-from rich.console import Console
-from rich.table import Table
 
 from .chunking import chunk_text, iter_documents, read_text
 from .config import SETTINGS
@@ -18,7 +16,40 @@ from .vectorstore import delete_document, upsert_chunks
 if TYPE_CHECKING:
     from pathlib import Path
 
-console = Console()
+if importlib.util.find_spec("rich") is not None:
+    from rich.console import Console  # pragma: no cover - optional dependency
+    from rich.table import Table  # pragma: no cover - optional dependency
+
+    console = Console()
+else:  # pragma: no cover - fallback for environments without rich
+    class Console:
+        def log(self, message: str) -> None:  # pragma: no cover - simple logging
+            print(message)
+
+        def print(self, message: str = "") -> None:  # pragma: no cover
+            if isinstance(message, Table):
+                print(str(message))
+            else:
+                print(message)
+
+    class Table:  # pragma: no cover - placeholder
+        def __init__(self, *args, **kwargs):
+            self.rows = []
+            self.columns: list[str] = []
+
+        def add_column(self, name: str, **_kwargs):
+            self.columns.append(name)
+
+        def add_row(self, *row):
+            self.rows.append(row)
+
+        def __str__(self) -> str:
+            lines = [" | ".join(self.columns)] if self.columns else []
+            for row in self.rows:
+                lines.append(" | ".join(str(item) for item in row))
+            return "\n".join(lines)
+
+    console = Console()
 
 
 def _ingest_file(path: Path, fake_embeddings: bool) -> tuple[list[DocumentChunk], int]:
